@@ -1,3 +1,5 @@
+__pycache__/
+**/__pycache__/
 todo.txt
 main.py
 translation_model/*
