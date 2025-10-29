@@ -4,7 +4,6 @@ todo.txt
 main.py
 translation_model/*
 nightly/*
-graph/*
 models/encoders/*
 models/translation/*
 utils/*

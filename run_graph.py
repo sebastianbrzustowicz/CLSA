@@ -1,74 +1,9 @@
-from typing import TypedDict, Annotated
-from langgraph.graph import StateGraph, END
+import argparse
+import sys
 import time
-import operator
-from rich.console import Console
-from rich.table import Table
+from graph.graph_builder import build_graph
 
-# ============= STATE DEFINITION =============
-
-class InputText(TypedDict):
-    language: str
-    text: str
-
-class RawArticle(TypedDict):
-    article_id: int
-    language: str
-    text: str
-
-class TranslatedArticles(TypedDict):
-    article_id: int
-    source_language: str
-    text_en: str
-
-class ModelResult(TypedDict):
-    article_id: int
-    source_language: str
-    model: str
-    score: float
-
-class GraphState(TypedDict):
-    selected_languages: list[str]
-    num_articles: int
-    input_text: list[InputText]
-    raw_articles: list[RawArticle]
-    translated_articles: list[TranslatedArticles]
-    results: Annotated[list[ModelResult], operator.add]
-    summary: str
-
-# ============= NODES =============
-
-def translate_node(state: GraphState) -> GraphState:
-    """
-    Example translation node (dummy implementation)
-    """
-    print(f"\n🌍 NODE: translate_node")
-    print(f"   Input: '{state['input_text']}'")
-    print(f"   Languages: {state['selected_languages']}")
-
-    translated = {}
-
-    for language in state["selected_languages"]:
-        time.sleep(0.05)
-        translated[language] = f"{state['input_text']} [translated to {language}]"
-        print(f"   ✓ Translated to {language}")
-
-    return {**state, "translated_texts": translated}
-
-# ============= GRAPH CONSTRUCTION =============
-
-def build_graph():
-    workflow = StateGraph(GraphState)
-    workflow.add_node("translate", translate_node)
-    workflow.set_entry_point("translate")
-    return workflow.compile()
-
-# ============= EXECUTION =============
-
-if __name__ == "__main__":
-    import argparse
-    import sys
-
+def main():
     try:
         import rich
     except ImportError:
@@ -130,3 +65,6 @@ if __name__ == "__main__":
     print(f"📊 Total results: {len(final_state.get('results', []))}")
     print(f"🧾 Summary: {final_state.get('summary', 'N/A')}")
     print("=" * 70)
+
+if __name__ == "__main__":
+    main()
