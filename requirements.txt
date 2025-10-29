@@ -1,0 +1,3 @@
+# LangGraph & LangChain libs
+langgraph>=0.1.0
+langchain>=0.2.0
