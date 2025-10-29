@@ -1,7 +1,7 @@
 import time
 from graph.state_definitions import GraphState
 
-def translate_node(state: GraphState) -> GraphState:
+def translate_to_multiple_node(state: GraphState) -> GraphState:
     """
     Example translation node (dummy implementation)
     """
