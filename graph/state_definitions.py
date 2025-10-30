@@ -25,7 +25,7 @@ class GraphState(TypedDict):
     selected_languages: list[str]
     num_articles: int
     input_text: list[InputText]
-    raw_articles: list[RawArticle]
-    translated_articles: list[TranslatedArticles]
+    raw_articles: Annotated[list[RawArticle], operator.add]
+    translated_articles: Annotated[list[TranslatedArticles], operator.add]
     results: Annotated[list[ModelResult], operator.add]
     summary: str

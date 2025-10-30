@@ -1,32 +1,32 @@
 from langgraph.graph import StateGraph, END
 from graph.state_definitions import GraphState
 from graph.nodes.translate_to_multiple_node import translate_to_multiple_node
+from graph.nodes.print_final_state_node import print_final_state_node
+from graph.nodes.scrape_node import scrape_node_factory
 
-def build_graph():
+def build_graph(initial_state: GraphState):
     workflow = StateGraph(GraphState)
-    workflow.add_node("translate", translate_to_multiple_node)
-    """
-    languages = ["pl", "de", "fr"]
-    for lang in languages:
-        workflow.add_node(f"scrape_{lang}", scrape_node)
-        workflow.add_edge("translate", f"scrape_{lang}")
-      
-    workflow.add_node("translate_to_en", translate_to_english_node)
-    for lang in languages:
-        workflow.add_edge(f"scrape_{lang}", "translate_to_en")
-    
-    models = ["model1", "model2", "model3", "model4", "model5", "model5"]
-    for model_node in models:
-        workflow.add_node(model_node, globals()[model_node + "_node"])
-        workflow.add_edge("translate_to_en", model_node)
-    
-    workflow.add_node("summarize", summarize_node)
-    for model_node in models:
-        workflow.add_edge(model_node, "summarize")
-    
-    workflow.add_node("display_table", display_table_node)
-    workflow.add_edge("summarize", "display_table")
-    workflow.add_edge("display_table", END)
-    """
-    workflow.set_entry_point("translate")
+
+    # --- Entry node ---
+    workflow.add_node("translate_to_many", translate_to_multiple_node)
+
+    # --- Scraping nodes ---
+    scrape_nodes = []
+    for lang in initial_state["selected_languages"]:
+        node_name = f"scrape_{lang}"
+        workflow.add_node(node_name, scrape_node_factory(lang))
+        workflow.add_edge("translate_to_many", node_name)
+        scrape_nodes.append(node_name)
+
+    # --- Final print node ---
+    workflow.add_node("print_final_state", print_final_state_node)
+    for node_name in scrape_nodes:
+        workflow.add_edge(node_name, "print_final_state")
+
+    # --- End of workflow ---
+    workflow.add_edge("print_final_state", END)
+
+    # Entry point
+    workflow.set_entry_point("translate_to_many")
+
     return workflow.compile()

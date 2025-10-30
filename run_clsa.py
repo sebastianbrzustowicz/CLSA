@@ -36,18 +36,23 @@ def main():
         print("❗ No languages provided. Example usage: --langs en,pl,de")
         sys.exit(1)
 
-    graph = build_graph()
-
     initial_state = {
-        "input_text": args.text,
+        "input_text": [
+            {
+                "language": "en",
+                "text": args.text
+            }
+        ],
         "selected_languages": selected_languages,
-        "translated_texts": {},
-        "scraped_articles": {},
-        "translated_to_english": {},
+        "translated_texts": [],
+        "raw_articles": [],
+        "translated_to_english": [],
         "results": [],
         "summary": "",
         "num_articles": args.articles
     }
+
+    graph = build_graph(initial_state)
 
     print("=" * 70)
     print("🚀 Starting Cross-Lingual Sentiment Analyzer (LangGraph + rich)")
