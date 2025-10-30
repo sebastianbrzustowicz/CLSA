@@ -15,6 +15,7 @@ def scrape_node_factory(language: str):
         num_articles = state.get("num_articles", 3)
         collected = []
         start_article_id = len(state.get("raw_articles", []))
+        visited_urls = set()
 
         base_url = "https://duckduckgo.com/html/"
         params = {"q": f"{query_text} news", "kl": f"{language}-en", "s": "0"}
@@ -37,6 +38,8 @@ def scrape_node_factory(language: str):
             if not links:
                 break
 
+            print(f"[{language.upper()}] 🌐 Found {len(links)} potential results on page {page + 1}")
+
             for link in links:
                 if len(collected) >= num_articles:
                     break
@@ -45,12 +48,19 @@ def scrape_node_factory(language: str):
                 qs = parse_qs(parsed.query)
                 actual_url = unquote(qs["uddg"][0]) if "uddg" in qs else link
 
+                if actual_url in visited_urls:
+                    continue
+                visited_urls.add(actual_url)
+
                 try:
                     r = requests.get(actual_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+                    r.encoding = r.apparent_encoding
                     r.raise_for_status()
                     page_soup = BeautifulSoup(r.text, "html.parser")
+
                     for tag in page_soup(["script", "style", "noscript", "header", "footer", "aside", "form", "nav"]):
                         tag.decompose()
+
                     paragraphs = [p.get_text(" ", strip=True) for p in page_soup.find_all("p")]
                     text_body = "\n".join(p for p in paragraphs if len(p) > 50)
 

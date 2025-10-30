@@ -7,3 +7,4 @@ nightly/*
 models/encoders/*
 models/translation/*
 utils/*
+output/*
