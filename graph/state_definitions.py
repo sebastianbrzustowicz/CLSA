@@ -1,4 +1,4 @@
-from typing import TypedDict, Annotated
+from typing import TypedDict, Annotated, Union, Dict
 import operator
 
 class InputText(TypedDict):
@@ -19,7 +19,7 @@ class ModelResult(TypedDict):
     article_id: int
     source_language: str
     model: str
-    score: float
+    score: Union[float, Dict[str, float]]
 
 class GraphState(TypedDict):
     selected_languages: list[str]
