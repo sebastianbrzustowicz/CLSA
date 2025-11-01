@@ -25,16 +25,34 @@ python run_clsa.py -t "BRICS Nations Plan Expansion of Membership and Partner Co
 ## Setup and Usage
 First, you need to download the appropriate models to the `models` folder.
 
+```bash
+mkdir -p models/translation models/encoders
+
+cd models/translation
+git clone https://huggingface.co/facebook/m2m100_418M
+
+cd ../encoders
+git clone https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest
+git clone https://huggingface.co/unitary/toxic-bert
+git clone https://huggingface.co/j-hartmann/emotion-english-distilroberta-base
+git clone https://huggingface.co/cardiffnlp/twitter-roberta-base-irony
+git clone https://huggingface.co/cointegrated/roberta-base-formality
+git clone https://huggingface.co/IDA-SERICS/PropagandaDetection
+
+cd ../..
+```
+
 To run graph use command below:
 ```bash
-python run_clsa.py -t "BRICS Nations Plan Expansion of Membership and Partner Countries" -l en,pl,zh,ru,uk,de,fr,hu -a 10
+python run_clsa.py -t "<YOUR_TOPIC_HERE>" -l <LANGUAGE_CODES_COMMA_SEPARATED> -a <NUM_ARTICLES_PER_LANGUAGE>
 ```
 Flags:
 - t - topic
-- l - languages
+- l - languages (comma-separated)
 - a - number of articles per language
 
 A list of all available languages can be found here: [Translation model languages](https://huggingface.co/facebook/m2m100_418M)
+
 ## Architecture
 
 ```mermaid
