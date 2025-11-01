@@ -55,7 +55,7 @@ A list of all available languages can be found here: [Translation model language
 
 ## Architecture
 
-```mermaid
+```plain
 Architecture:
 
              +-----------------+
