@@ -7,6 +7,7 @@ import torch.nn.functional as F
 def irony_node(state: GraphState) -> GraphState:
     """
     Node that analyzes irony using 'cardiffnlp/twitter-roberta-base-irony'.
+    Handles long texts automatically with tokenizer overflow chunks.
     The score field contains the full probability distribution for the two classes: irony, non_irony.
     """
     print("\n📝 NODE: irony_node")
@@ -21,16 +22,13 @@ def irony_node(state: GraphState) -> GraphState:
 
     model_path = "cardiffnlp/twitter-roberta-base-irony"
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModelForSequenceClassification.from_pretrained(model_path, trust_remote_code=True)
-    model = model.to(device, non_blocking=True)
-    max_tokens = 256
+    model = AutoModelForSequenceClassification.from_pretrained(model_path, trust_remote_code=True).to(device)
 
+    max_length = 512
     class_labels = ["irony", "non_irony"]
 
     existing_results = state.get("results", [])
-    existing_ids_for_model = {
-        r["article_id"] for r in existing_results if r.get("model") == "cardiffnlp/twitter-roberta-base-irony"
-    }
+    existing_ids_for_model = {r["article_id"] for r in existing_results if r.get("model") == model_path}
 
     new_results: List[ModelResult] = []
 
@@ -38,28 +36,44 @@ def irony_node(state: GraphState) -> GraphState:
         if article["article_id"] in existing_ids_for_model:
             continue
 
-        text = article["text_en"]
-        tokens = tokenizer(text, return_tensors="pt", add_special_tokens=False)["input_ids"].squeeze(0)
-        chunks = [tokens[i:i + max_tokens] for i in range(0, len(tokens), max_tokens)]
+        text = article.get("text_en", "")
+        if not text.strip():
+            print(f"[{article['article_id']}] Empty text — skipping.")
+            continue
+
+        encodings = tokenizer(
+            text,
+            truncation=True,
+            max_length=max_length,
+            stride=50,
+            return_overflowing_tokens=True,
+            padding=False
+        )
 
         all_scores = []
-        for chunk in chunks:
-            chunk = chunk.unsqueeze(0).to(device)
+        for input_ids, attention_mask in zip(encodings["input_ids"], encodings["attention_mask"]):
+            inputs = tokenizer.pad(
+                {"input_ids": [input_ids], "attention_mask": [attention_mask]},
+                padding="max_length",
+                max_length=max_length,
+                return_tensors="pt"
+            ).to(device)
+
             with torch.no_grad():
-                logits = model(chunk).logits
+                logits = model(**inputs).logits
                 probs = F.softmax(logits, dim=-1)
                 all_scores.append(probs.cpu())
 
         avg_scores = torch.mean(torch.stack(all_scores), dim=0).squeeze(0)
         score_dict: Dict[str, float] = {cls: float(avg_scores[i]) for i, cls in enumerate(class_labels)}
 
-        result: ModelResult = {
+        new_results.append({
             "article_id": article["article_id"],
-            "source_language": article["source_language"],
-            "model": "cardiffnlp/twitter-roberta-base-irony",
+            "source_language": article.get("source_language", "unknown"),
+            "model": model_path,
             "score": score_dict
-        }
-        new_results.append(result)
-        print(f"[{article['article_id']}] Irony analyzed: {score_dict}")
+        })
+
+        print(f"[{article['article_id']}] ✅ Irony result: {score_dict}")
 
     return {"results": new_results}

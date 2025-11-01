@@ -4,7 +4,7 @@ import time
 from urllib.parse import urlparse, parse_qs, unquote
 from graph.state_definitions import GraphState, RawArticle
 
-def scrape_node_factory(language: str):
+def scrape_node_factory(language: str, min_length: int = 150):
     def scrape_node(state: GraphState) -> GraphState:
         candidates = [it for it in state["input_text"] if it["language"] == language]
         if not candidates:
@@ -58,14 +58,18 @@ def scrape_node_factory(language: str):
                     r.raise_for_status()
                     page_soup = BeautifulSoup(r.text, "html.parser")
 
+                    # Remove unwanted tags
                     for tag in page_soup(["script", "style", "noscript", "header", "footer", "aside", "form", "nav"]):
                         tag.decompose()
 
                     paragraphs = [p.get_text(" ", strip=True) for p in page_soup.find_all("p")]
                     text_body = "\n".join(p for p in paragraphs if len(p) > 50)
 
-                    if not text_body:
+                    # Skip empty articles or too short
+                    if not text_body or len(text_body) < min_length:
                         continue
+
+                    # Skip pages with unwanted content in non-English languages
                     if language != "en" and any(x in text_body.lower() for x in ["cookies", "privacy", "accept", "terms", "javascript"]):
                         continue
 

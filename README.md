@@ -5,5 +5,5 @@
 ## Usage
 To run graph use command below:
 ```bash
-python run_clsa.py -t "Artificial Intelligence in medicine" -l en,es,zh,fr -a 5
+python run_clsa.py -t "Putin Trump agreement" -l en,pl,zh,ru,uk,tr -a 5
 ```

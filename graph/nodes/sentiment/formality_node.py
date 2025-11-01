@@ -7,6 +7,7 @@ import torch.nn.functional as F
 def formality_node(state: GraphState) -> GraphState:
     """
     Formality analysis node using 'cointegrated/roberta-base-formality'.
+    Handles long articles automatically with tokenizer overflow chunks.
     """
     print("\n📝 NODE: formality_node")
 
@@ -20,10 +21,11 @@ def formality_node(state: GraphState) -> GraphState:
 
     model_path = "cointegrated/roberta-base-formality"
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModelForSequenceClassification.from_pretrained(model_path, trust_remote_code=True)
-    model = model.to(device, non_blocking=True)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        model_path, trust_remote_code=True
+    ).to(device)
 
-    max_tokens = 128
+    max_length = 512
     class_labels = ["formal", "informal"]
 
     existing_results = state.get("results", [])
@@ -35,15 +37,31 @@ def formality_node(state: GraphState) -> GraphState:
         if article["article_id"] in existing_ids_for_model:
             continue
 
-        text = article["text_en"]
-        tokens = tokenizer(text, add_special_tokens=True)["input_ids"]
-        chunks = [tokens[i:i + max_tokens] for i in range(0, len(tokens), max_tokens)]
+        text = article.get("text_en", "")
+        if not text.strip():
+            print(f"[{article['article_id']}] Empty text — skipping.")
+            continue
+
+        encodings = tokenizer(
+            text,
+            truncation=True,
+            max_length=max_length,
+            stride=50,
+            return_overflowing_tokens=True,
+            padding=False
+        )
 
         all_scores = []
-        for chunk_tokens in chunks:
-            chunk_tensor = torch.tensor([chunk_tokens]).to(device)
+        for input_ids, attention_mask in zip(encodings["input_ids"], encodings["attention_mask"]):
+            inputs = tokenizer.pad(
+                {"input_ids": [input_ids], "attention_mask": [attention_mask]},
+                padding="max_length",
+                max_length=max_length,
+                return_tensors="pt"
+            ).to(device)
+
             with torch.no_grad():
-                logits = model(chunk_tensor).logits
+                logits = model(**inputs).logits
                 probs = F.softmax(logits, dim=-1)
                 all_scores.append(probs.cpu())
 
@@ -52,11 +70,11 @@ def formality_node(state: GraphState) -> GraphState:
 
         new_results.append({
             "article_id": article["article_id"],
-            "source_language": article["source_language"],
+            "source_language": article.get("source_language", "unknown"),
             "model": model_path,
             "score": score_dict
         })
 
-        print(f"[{article['article_id']}] Formality analyzed: {score_dict}")
+        print(f"[{article['article_id']}] ✅ Formality result: {score_dict}")
 
     return {"results": new_results}

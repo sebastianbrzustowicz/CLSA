@@ -8,3 +8,4 @@ models/encoders/*
 models/translation/*
 utils/*
 output/*
+test.py
