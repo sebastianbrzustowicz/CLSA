@@ -67,8 +67,6 @@ def main():
 
     print("\n" + "=" * 70)
     print(f"✅ Done in {elapsed:.2f}s")
-    print(f"📊 Total results: {len(final_state.get('results', []))}")
-    print(f"🧾 Summary: {final_state.get('summary', 'N/A')}")
     print("=" * 70)
 
 if __name__ == "__main__":
