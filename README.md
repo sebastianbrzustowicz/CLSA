@@ -26,20 +26,7 @@ python run_clsa.py -t "BRICS Nations Plan Expansion of Membership and Partner Co
 First, you need to download the appropriate models to the `models` folder.
 
 ```bash
-mkdir -p models/translation models/encoders
-
-cd models/translation
-git clone https://huggingface.co/facebook/m2m100_418M
-
-cd ../encoders
-git clone https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest
-git clone https://huggingface.co/unitary/toxic-bert
-git clone https://huggingface.co/j-hartmann/emotion-english-distilroberta-base
-git clone https://huggingface.co/cardiffnlp/twitter-roberta-base-irony
-git clone https://huggingface.co/cointegrated/roberta-base-formality
-git clone https://huggingface.co/IDA-SERICS/PropagandaDetection
-
-cd ../..
+make
 ```
 
 To run graph use command below:
