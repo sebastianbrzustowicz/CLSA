@@ -4,7 +4,7 @@ from graph.state_definitions import GraphState, TranslatedArticles, ModelResult
 from typing import List, Dict
 import torch.nn.functional as F
 
-def propaganda_detection_node(state: GraphState) -> GraphState:
+def propaganda_detection_node(state: GraphState, debug: bool = False) -> GraphState:
     """
     Detects propaganda using IDA-SERICS/PropagandaDetection model.
     Handles long articles automatically with tokenizer overflow chunks.
@@ -13,11 +13,13 @@ def propaganda_detection_node(state: GraphState) -> GraphState:
 
     translated_articles: List[TranslatedArticles] = state.get("translated_articles", [])
     if not translated_articles:
-        print("❗ No translated articles found. Skipping propaganda detection.")
+        if debug:
+            print("❗ No translated articles found. Skipping propaganda detection.")
         return {}
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"   🖥 Using device: {device}")
+    if debug:
+        print(f"   🖥 Using device: {device}")
 
     model_path = "IDA-SERICS/PropagandaDetection"
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -33,13 +35,23 @@ def propaganda_detection_node(state: GraphState) -> GraphState:
 
     new_results: List[ModelResult] = []
 
+    total = len(translated_articles)
+    processed_count = 0
+
     for article in translated_articles:
         if article["article_id"] in existing_ids_for_model:
+            processed_count += 1
+            if debug:
+                percent = (processed_count / total) * 100
+                print(f"\rProgress: {percent:.1f}% ({processed_count}/{total})", end="", flush=True)
             continue
 
-        text = article["text_en"]
+        text = article.get("text_en", "")
         if not text.strip():
-            print(f"[{article['article_id']}] Empty text — skipping.")
+            processed_count += 1
+            if debug:
+                percent = (processed_count / total) * 100
+                print(f"\rProgress: {percent:.1f}% ({processed_count}/{total})", end="", flush=True)
             continue
 
         encodings = tokenizer(
@@ -75,6 +87,11 @@ def propaganda_detection_node(state: GraphState) -> GraphState:
             "score": score_dict
         })
 
-        print(f"[{article['article_id']}] ✅ Propaganda detection result: {score_dict}")
+        processed_count += 1
+        percent = (processed_count / total) * 100
+        print(f"\rProgress: {percent:.1f}% ({processed_count}/{total})", end="", flush=True)
+
+    if debug:
+        print()
 
     return {"results": new_results}

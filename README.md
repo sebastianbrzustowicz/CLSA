@@ -5,20 +5,20 @@
 ## Output
 Example prompt:
 ```bash
-python run_clsa.py -t "Gas and Electricity Prices" -l en,pl,zh,ru,uk,tr,de,fr,ja,ar,hu -a 10
+python run_clsa.py -t "Putin Trump agreement" -l ar,de,en,he,hi,hu,ja,pl,ru,tr,uk,zh -a 10
 ```
-Output as `output/clsa_results_Gas-and-Electricity-Prices.html` file:
+Output as `output/clsa_results_Putin-Trump-agreement.html` file:
 <p align="center">
-  <img src="images/gas_energy_prices.png" width="100%" alt="Gas & Energy Prices">
+  <img src="images/putin_trump_agreement.png" width="100%" alt="Gas & Energy Prices">
   <br><em>Gas & Energy Prices</em>
 </p>
 Or another topic:
 
 ```bash
-python run_clsa.py -t "BRICS Nations Plan Expansion of Membership and Partner Countries" -l en,pl,zh,ru,ar,de,hu,tr,uk -a 10
+python run_clsa.py -t "BRICS Nations Plan Expansion of Membership and Partner Countries" -l ar,de,en,hi,pt,tr -a 10
 ```
 <p align="center">
-  <img src="images/brics_countries_expansion.png" width="100%" alt="BRICS Nations Plan Expansion of Membership and Partner Countries">
+  <img src="images/brics_sentiment.png" width="100%" alt="BRICS Nations Plan Expansion of Membership and Partner Countries">
   <br><em>BRICS Nations Plan Expansion of Membership and Partner Countries</em>
 </p>
 

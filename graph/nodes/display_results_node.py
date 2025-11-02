@@ -38,17 +38,17 @@ HTML_COLORS = {
 
 def colorize_cell_cli(model: str, labels: list[Tuple[str, float]]) -> str:
     reset = "\033[0m"
-    if model in ["sentiment", "emotion"]:
-        colored_labels = []
-        for i, (lbl, val) in enumerate(labels):
-            if model == "sentiment":
-                colors = {"positive": "\033[92m", "neutral": "\033[97m", "negative": "\033[91m"}
-            else:
-                colors = {"anger":"\033[91m", "fear":"\033[91m", "disgust":"\033[91m",
-                          "sadness":"\033[91m", "neutral":"\033[97m", "joy":"\033[92m", "surprise":"\033[92m"}
-            col = colors.get(lbl, "\033[97m") if i == 0 else "\033[90m"
-            colored_labels.append(f"{col}{lbl} ({val:.3f}){reset}")
-        return ", ".join(colored_labels)
+    if model == "sentiment":
+        colors = {"positive": "\033[92m", "neutral": "\033[97m", "negative": "\033[91m"}
+        return ", ".join(f"{colors.get(lbl,'\033[97m')}{lbl} ({val:.3f}){reset}" for lbl, val in labels)
+    
+    elif model == "emotion":
+        colors = {
+            "anger":"\033[91m", "fear":"\033[91m", "disgust":"\033[91m",
+            "sadness":"\033[91m", "neutral":"\033[97m", "joy":"\033[92m", "surprise":"\033[92m"
+        }
+        return ", ".join(f"{colors.get(lbl,'\033[97m')}{lbl} ({val:.3f}){reset}" for lbl, val in labels)
+    
     else:
         label, value = labels[0] if labels else ("", 0.0)
         if model == "toxicity":
@@ -61,13 +61,14 @@ def colorize_cell_cli(model: str, labels: list[Tuple[str, float]]) -> str:
             color = "\033[97m"
         return f"{color}{value:.3f}{reset}"
 
+
 def colorize_cell_html(model: str, labels: list[Tuple[str, float]]) -> str:
-    if model in ["sentiment", "emotion"]:
-        colored_labels = []
-        for i, (lbl, val) in enumerate(labels):
-            color = HTML_COLORS.get(lbl, "black") if i == 0 else "gray"
-            colored_labels.append(f'<span style="color:{color}">{html.escape(lbl)} ({val:.3f})</span>')
-        return ", ".join(colored_labels)
+    if model == "sentiment":
+        return ", ".join(f'<span style="color:{HTML_COLORS.get(lbl,"black")}">{html.escape(lbl)} ({val:.3f})</span>' for lbl, val in labels)
+    
+    elif model == "emotion":
+        return ", ".join(f'<span style="color:{HTML_COLORS.get(lbl,"black")}">{html.escape(lbl)} ({val:.3f})</span>' for lbl, val in labels)
+    
     else:
         value = labels[0][1] if labels else 0.0
         if model == "toxicity":

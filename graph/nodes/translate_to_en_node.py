@@ -27,19 +27,29 @@ def translate_to_en_node(state: GraphState) -> GraphState:
     translated_entries: list[TranslatedArticles] = []
     existing_ids = {a["article_id"] for a in state.get("translated_articles", [])}
 
+    total = len(raw_articles)
+    translated_count = 0
+
     for idx, article in enumerate(raw_articles):
         article_id = article["article_id"]
         source_lang = article["language"]
         text = article["text"]
 
         if article_id in existing_ids:
+            translated_count += 1
+            percent = (translated_count / total) * 100
+            print(f"\rProgress: {percent:.1f}% ({translated_count}/{total})", end="", flush=True)
             continue
+
         if source_lang == "en":
             translated_entries.append({
                 "article_id": article_id,
                 "source_language": "en",
                 "text_en": text
             })
+            translated_count += 1
+            percent = (translated_count / total) * 100
+            print(f"\rProgress: {percent:.1f}% ({translated_count}/{total})", end="", flush=True)
             continue
 
         tokenizer.src_lang = source_lang
@@ -67,6 +77,10 @@ def translate_to_en_node(state: GraphState) -> GraphState:
             "text_en": translated_text
         })
 
-        print(f"✅ [{source_lang.upper()}] Article {article_id} translated ({idx+1}/{len(raw_articles)})")
+        translated_count += 1
+        percent = (translated_count / total) * 100
+        print(f"\rProgress: {percent:.1f}% ({translated_count}/{total})", end="", flush=True)
+
+    print()
 
     return {"translated_articles": translated_entries}

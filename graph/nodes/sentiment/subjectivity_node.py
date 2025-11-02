@@ -4,7 +4,7 @@ from graph.state_definitions import GraphState, TranslatedArticles, ModelResult
 from typing import List, Dict
 import torch.nn.functional as F
 
-def subjectivity_node(state: GraphState) -> GraphState:
+def subjectivity_node(state: GraphState, debug: bool = False) -> GraphState:
     """
     Node that analyzes subjectivity using 'GroNLP/mdebertav3-subjectivity-english'.
     Handles long texts automatically with tokenizer overflow chunks.
@@ -14,11 +14,13 @@ def subjectivity_node(state: GraphState) -> GraphState:
 
     translated_articles: List[TranslatedArticles] = state.get("translated_articles", [])
     if not translated_articles:
-        print("❗ No translated articles found. Skipping subjectivity analysis.")
+        if debug:
+            print("❗ No translated articles found. Skipping subjectivity analysis.")
         return {}
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"   🖥 Using device: {device}")
+    if debug:
+        print(f"   🖥 Using device: {device}")
 
     model_path = "GroNLP/mdebertav3-subjectivity-english"
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -32,13 +34,23 @@ def subjectivity_node(state: GraphState) -> GraphState:
 
     new_results: List[ModelResult] = []
 
+    total = len(translated_articles)
+    processed_count = 0
+
     for article in translated_articles:
         if article["article_id"] in existing_ids_for_model:
+            processed_count += 1
+            if debug:
+                percent = (processed_count / total) * 100
+                print(f"\rProgress: {percent:.1f}% ({processed_count}/{total})", end="", flush=True)
             continue
 
         text = article.get("text_en", "")
         if not text.strip():
-            print(f"[{article['article_id']}] Empty text — skipping.")
+            processed_count += 1
+            if debug:
+                percent = (processed_count / total) * 100
+                print(f"\rProgress: {percent:.1f}% ({processed_count}/{total})", end="", flush=True)
             continue
 
         encodings = tokenizer(
@@ -74,6 +86,11 @@ def subjectivity_node(state: GraphState) -> GraphState:
             "score": score_dict
         })
 
-        print(f"[{article['article_id']}] ✅ Subjectivity result: {score_dict}")
+        processed_count += 1
+        percent = (processed_count / total) * 100
+        print(f"\rProgress: {percent:.1f}% ({processed_count}/{total})", end="", flush=True)
+
+    if debug:
+        print()
 
     return {"results": new_results}
